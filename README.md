@@ -23,50 +23,50 @@ The site is 100% static, so it can be hosted on GitHub Pages, Netlify, Vercel,
 Cloudflare Pages, or any shared host — upload the repository contents as-is.
 
 > **Note:** some hosts (Linux, GitHub Pages, Netlify) are case-sensitive.
-> Keep image file names and their references in `script.js` matching exactly
+> Keep image file names and their references in `content.js` matching exactly
 > (e.g. `images/coconut.PNG` is uppercase in this repo).
 
 ## Project Structure
 
 ```
-index.html   Markup: navbar, hero, menu grid, cart panel, modal, footer
-style.css    All styling, dark mode theme and responsive rules
-script.js    All behaviour: products, cart, checkout, modal, theme, mobile nav
-fonts/       Custom "Nove" display font (Nove.otf)
-images/      Product photos, hero images and favicon
+index.html         Markup only: empty shell that script.js fills in
+content.js         Site text (hero, about, footer, WhatsApp number) + fallback menu
+sanity-content.js  Fetches the live menu from Sanity
+script.js          All behaviour: rendering, cart, checkout, modal, theme, mobile nav
+style.css          All styling, dark mode theme and responsive rules
+fonts/             Custom "Nove" display font (Nove.otf)
+images/            Hero image, favicon and the photos used by the fallback menu
 ```
 
 ## Editing the Menu
 
-All products live in one place — the `PRODUCTS` array at the top of `script.js`.
-There is no need to touch `index.html` to add, remove, or re-price a snack:
+The owner manages **products and categories** in Sanity Studio:
+**https://maarifatullah.sanity.studio** (sign-in required). Published changes
+appear on the site within about a minute, with no redeploy.
 
-```js
-{
-  id: "gireba",                 // must be unique; used for element ids
-  name: "Gireba",               // used as the cart key
-  description: "Crunchy filled snack",
-  price: 2500,                  // numeric price used for totals
-  priceLabel: "₦2500",          // text shown on the card and modal
-  image: "images/gireba.jpg",
-}
+The Studio's code lives in the separate `maarfatullahi-snacks-cms` project.
+
+- **Products:** name, short description, price, optional price note (e.g. `/ 4`),
+  photo, category, "Available to order" switch, optional badge, menu position.
+- **Categories:** name and menu position. The category filter on the menu appears
+  automatically once at least one product has a category.
+
+`sanity-content.js` reads the published menu from Sanity's public API (no token).
+If Sanity cannot be reached within 6 seconds, the site falls back to the products
+in `content.js`, so keep those roughly in sync with the real menu.
+
+Sanity only answers browsers from allowed sites. If the site moves to a new
+domain, add it from the CMS project:
+
+```powershell
+npx sanity cors add https://your-new-domain.com --no-credentials
 ```
-
-Product cards, the modal preview, the quantity steppers and the cart are all
-rendered from this array.
 
 ## Configuration
 
-Business settings live in the `CONFIG` object at the top of `script.js`:
-
-```js
-const CONFIG = {
-  whatsappNumber: "2347032515203", // international format, no leading '+'
-  storageKeys: { cart: "ms_cart", theme: "ms_theme" },
-};
-```
-
-Remember to update the WhatsApp link in the footer (`index.html`) if the number changes.
+Business details (name, WhatsApp number, currency, address) and all other site
+text live in `content.js`. The WhatsApp number is defined once there and every
+WhatsApp link and the checkout message are built from it.
 
 ## Unused Assets
 
@@ -84,7 +84,7 @@ image in the navbar markup.
 
 ## Features
 
-- Data-driven product grid rendered from `PRODUCTS`
+- Menu managed by the owner in Sanity Studio, with a built-in fallback menu
 - Quantity steppers with live per-item and cart totals
 - Cart persists across page reloads via `localStorage`
 - Cart panel with per-item remove buttons and an empty-cart state

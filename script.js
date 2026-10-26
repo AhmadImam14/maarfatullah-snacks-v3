@@ -283,10 +283,11 @@ function normalizeContent(raw) {
 /* ==========================================================================
  * 3. RESOLVED CONTENT + CURRENCY FORMATTING
  *    Everything below this line reads content from `content` / `products`.
- *    Replacing window.SITE_CONTENT is the entire CMS migration.
+ *    `products` starts empty and is filled by loadMenu(): from Sanity when
+ *    reachable (sanity-content.js), otherwise from content.js.
  * ======================================================================== */
 const content = normalizeContent(window.SITE_CONTENT);
-const products = content.menu.products;
+let products = [];
 const currency = content.business.currency;
 
 /**
@@ -1255,10 +1256,7 @@ function bindEvents() {
  *    Order matters: cart is reconciled against current content before the
  *    first render so a saved cart can never show a removed/unavailable item.
  * ======================================================================== */
-function init() {
-  state.cart = loadCart();
-  reconcileCart();
-
+async function init() {
   initTheme();
 
   renderBrand();
@@ -1267,15 +1265,34 @@ function init() {
   renderPromo();
   renderAbout();
   renderTestimonials();
+  renderFooter();
+
+  bindEvents();
+  observeFadeElements(document);
+
+  await loadMenu();
+
+  state.cart = loadCart();
+  reconcileCart();
 
   renderCategoryFilter();
   renderProducts();
-  renderFooter();
-
   updateCart();
-  bindEvents();
+}
 
-  observeFadeElements(document);
+/**
+ * Use the live Sanity menu when it loaded, otherwise the menu in content.js.
+ * An empty list from Sanity is respected (the owner removed every product);
+ * only a failed request falls back.
+ */
+async function loadMenu() {
+  const grid = document.getElementById("products-grid");
+  grid.setAttribute("aria-busy", "true");
+
+  const liveMenu = window.SITE_MENU_READY ? await window.SITE_MENU_READY : null;
+  products = Array.isArray(liveMenu) ? liveMenu.map(normalizeProduct) : content.menu.products;
+
+  grid.removeAttribute("aria-busy");
 }
 
 document.addEventListener("DOMContentLoaded", init);

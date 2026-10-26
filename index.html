@@ -189,11 +189,13 @@
 </div>
 
 <!--
-  content.js  -> publishes window.SITE_CONTENT (the future Sanity swap point)
-  script.js   -> renders that data and contains all application logic
-  Load order matters: content first, app logic second.
+  content.js        -> publishes window.SITE_CONTENT (site text + fallback menu)
+  sanity-content.js -> fetches the live menu from Sanity (window.SITE_MENU_READY)
+  script.js         -> renders that data and contains all application logic
+  Load order matters: content first, loader second, app logic last.
 -->
 <script src="content.js"></script>
+<script src="sanity-content.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
