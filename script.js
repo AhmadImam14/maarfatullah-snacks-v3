@@ -218,6 +218,7 @@ function normalizeContent(raw) {
   const hero = source.hero && typeof source.hero === "object" ? source.hero : {};
   const about = source.about && typeof source.about === "object" ? source.about : {};
   const footer = source.footer && typeof source.footer === "object" ? source.footer : {};
+  const howToOrder = source.howToOrder && typeof source.howToOrder === "object" ? source.howToOrder : {};
   const address = business.address && typeof business.address === "object" ? business.address : {};
   const rawCurrency = business.currency && typeof business.currency === "object" ? business.currency : {};
 
@@ -250,6 +251,19 @@ function normalizeContent(raw) {
       secondaryCta: hero.secondaryCta || null,
       image: hero.image || null,
       imageAlt: resolveImageAlt(hero.image, ""),
+      highlights: readList(hero.highlights)
+        .map((item) => readText(item))
+        .filter(Boolean),
+    },
+
+    howToOrder: {
+      heading: readText(howToOrder.heading),
+      steps: readList(howToOrder.steps)
+        .map((step) => ({
+          title: readText(step && step.title),
+          text: readText(step && step.text),
+        }))
+        .filter((step) => step.title || step.text),
     },
 
     menu: {
@@ -267,6 +281,7 @@ function normalizeContent(raw) {
         .map((paragraph) => readText(paragraph))
         .filter(Boolean),
       image: about.image || null,
+      cta: about.cta || null,
     },
 
     promo: source.promo && typeof source.promo === "object" ? source.promo : null,
@@ -412,11 +427,24 @@ function changeQty(product, change) {
     APP.maxQuantityPerItem
   );
 
-  const quantityEl = document.getElementById("qty-" + product.id);
-  if (quantityEl) quantityEl.textContent = state.cart[product.id].qty;
-
+  syncProductQuantity(product.id);
   saveCart();
   updateCart();
+}
+
+/** Reflect a product's cart quantity on its card (stepper value + highlight). */
+function syncProductQuantity(productId) {
+  const quantity = state.cart[productId] ? state.cart[productId].qty : 0;
+
+  const quantityEl = document.getElementById("qty-" + productId);
+  if (quantityEl) quantityEl.textContent = String(quantity);
+
+  const card = quantityEl ? quantityEl.closest(".card") : null;
+  if (card) card.classList.toggle("has-qty", quantity > 0);
+
+  if (modal.classList.contains("active") && modal.dataset.productId === productId) {
+    renderModalActions(findProductById(productId));
+  }
 }
 
 /** Remove a product from the cart entirely (cart-panel action). */
@@ -425,9 +453,7 @@ function removeItem(productId) {
 
   state.cart[productId].qty = 0;
 
-  const quantityEl = document.getElementById("qty-" + productId);
-  if (quantityEl) quantityEl.textContent = "0";
-
+  syncProductQuantity(productId);
   saveCart();
   updateCart();
 }
@@ -491,6 +517,9 @@ function createLink(link, className) {
 
 function renderBrand() {
   setText("brand", content.business.name);
+  setText("footer-name", content.business.name);
+  setText("footer-tagline", content.business.tagline);
+  setHidden("footer-tagline", !content.business.tagline);
 }
 
 function renderNav() {
@@ -546,6 +575,78 @@ function renderHero() {
     if (!link) return;
     actions.appendChild(createLink(link, actionIndex === 0 ? "btn" : "btn btn-secondary"));
     actionIndex += 1;
+  });
+
+  // Short selling points under the buttons (e.g. "Made fresh").
+  const highlights = document.getElementById("hero-highlights");
+  highlights.innerHTML = "";
+  hero.highlights.forEach((text) => {
+    const item = document.createElement("li");
+    item.textContent = text;
+    highlights.appendChild(item);
+  });
+  highlights.hidden = hero.highlights.length === 0;
+}
+
+/**
+ * Decorative ticker of product names. Built from the live menu, so it always
+ * matches what is for sale. The list is doubled so the loop is seamless.
+ */
+function renderTicker() {
+  const ticker = document.getElementById("ticker");
+  const track = document.getElementById("ticker-track");
+  track.innerHTML = "";
+
+  const names = products.filter((product) => product.available).map((product) => product.name);
+  if (names.length === 0) {
+    ticker.hidden = true;
+    return;
+  }
+
+  // Repeat short menus so one copy is always wider than the screen.
+  let row = names;
+  while (row.length < 8) row = row.concat(names);
+
+  row.concat(row).forEach((name) => {
+    const item = document.createElement("span");
+    item.className = "ticker-item";
+    item.textContent = name;
+    track.appendChild(item);
+  });
+
+  ticker.hidden = false;
+}
+
+/** "How to order" steps. Hidden when the content has none. */
+function renderSteps() {
+  const section = document.getElementById("how-to-order");
+  const steps = content.howToOrder.steps;
+  section.hidden = steps.length === 0;
+  if (steps.length === 0) return;
+
+  setText("steps-heading", content.howToOrder.heading);
+  setHidden("steps-heading", !content.howToOrder.heading);
+
+  const list = document.getElementById("steps-list");
+  list.innerHTML = "";
+
+  steps.forEach((step) => {
+    const item = document.createElement("li");
+    item.className = "step";
+
+    if (step.title) {
+      const title = document.createElement("h3");
+      title.textContent = step.title;
+      item.appendChild(title);
+    }
+
+    if (step.text) {
+      const text = document.createElement("p");
+      text.textContent = step.text;
+      item.appendChild(text);
+    }
+
+    list.appendChild(item);
   });
 }
 
@@ -628,14 +729,8 @@ function renderFooter() {
     footer.appendChild(nav);
   });
 
-  if (content.footer.note) {
-    const noteNav = document.createElement("nav");
-    const note = document.createElement("p");
-    note.className = "link";
-    note.textContent = content.footer.note;
-    noteNav.appendChild(note);
-    footer.appendChild(noteNav);
-  }
+  setText("footer-note", content.footer.note);
+  setHidden("footer-note", !content.footer.note);
 }
 
 
@@ -720,11 +815,13 @@ function renderCategoryFilter() {
  * The component is therefore already capable of the future fields, without any
  * of them being fabricated in today's content.
  */
-function createProductCard(product) {
+function createProductCard(product, index) {
   const quantity = state.cart[product.id] ? state.cart[product.id].qty : 0;
 
   const card = document.createElement("article");
   card.className = "card fade show";
+  card.style.setProperty("--i", String(index || 0));
+  if (quantity > 0) card.classList.add("has-qty");
   card.dataset.id = product.id;
   card.dataset.slug = product.slug;
   card.dataset.category = product.category || "";
@@ -854,7 +951,7 @@ function renderProducts() {
   const visible = getVisibleProducts();
   grid.innerHTML = "";
 
-  visible.forEach((product) => grid.appendChild(createProductCard(product)));
+  visible.forEach((product, index) => grid.appendChild(createProductCard(product, index)));
 
   const empty = document.getElementById("menu-empty");
   if (empty) {
@@ -883,6 +980,12 @@ function renderAbout() {
     el.textContent = paragraph;
     body.appendChild(el);
   });
+
+  const actions = document.getElementById("about-actions");
+  actions.innerHTML = "";
+  const cta = resolveLink(content.about.cta);
+  if (cta) actions.appendChild(createLink(cta, "btn"));
+  actions.hidden = !cta;
 }
 
 /**
@@ -957,7 +1060,12 @@ function updateCart() {
 
     const label = document.createElement("span");
     label.className = "cart-item-label";
-    label.textContent = entry.name + " ×" + entry.quantity;
+    label.textContent = entry.name;
+
+    const quantity = document.createElement("span");
+    quantity.className = "cart-item-qty";
+    quantity.textContent = entry.quantity + " × " + formatPrice(entry.price);
+    label.appendChild(quantity);
 
     const lineTotal = document.createElement("span");
     lineTotal.className = "cart-item-total";
@@ -984,8 +1092,26 @@ function updateCart() {
   }
 
   setText("cart-total", formatPrice(total));
-  setText("cart-count", count);
-  setText("cart-count-2", count);
+
+  ["cart-icon", "floating-cart"].forEach((id) => {
+    const trigger = document.getElementById(id);
+    if (!trigger) return;
+
+    const badge = trigger.querySelector(".count-badge");
+    const previous = Number(trigger.dataset.count || 0);
+    trigger.dataset.count = String(count);
+    trigger.setAttribute("aria-label", count ? "Open cart, " + count + " items" : "Open cart");
+
+    if (badge) {
+      badge.textContent = String(count);
+      // Restart the bump animation whenever the count goes up.
+      if (count > previous) {
+        badge.classList.remove("bump");
+        void badge.offsetWidth;
+        badge.classList.add("bump");
+      }
+    }
+  });
 
   const checkoutBtn = document.getElementById("checkout-btn");
   if (checkoutBtn) checkoutBtn.disabled = count === 0;
@@ -1063,12 +1189,46 @@ function openModal(product) {
     modalImage.hidden = true;
   }
 
+  modal.dataset.productId = product.id;
+  renderModalActions(product);
+
   lastFocusedElement = document.activeElement;
   modal.classList.add("active");
   document.body.classList.add("modal-open");
 
   const closeButton = modal.querySelector(".close-modal");
   if (closeButton) closeButton.focus();
+}
+
+/** "Add to cart" + "View cart" inside the preview, reflecting the cart. */
+function renderModalActions(product) {
+  const actions = document.getElementById("modal-actions");
+  actions.innerHTML = "";
+  if (!product || !product.available) return;
+
+  const quantity = state.cart[product.id] ? state.cart[product.id].qty : 0;
+
+  const add = document.createElement("button");
+  add.type = "button";
+  add.className = "btn";
+  add.textContent = quantity > 0 ? "Add another (" + quantity + " in cart)" : "Add to cart";
+  add.addEventListener("click", () => changeQty(product, 1));
+  actions.appendChild(add);
+
+  if (quantity > 0) {
+    const view = document.createElement("button");
+    view.type = "button";
+    view.className = "btn btn-secondary";
+    view.textContent = "View cart";
+    view.addEventListener("click", (event) => {
+      // Keep the document-level "click outside closes the cart" handler from
+      // closing the cart in the same click that opens it.
+      event.stopPropagation();
+      closeModal();
+      document.getElementById("cart-panel").classList.add("active");
+    });
+    actions.appendChild(view);
+  }
 }
 
 function closeModal() {
@@ -1263,11 +1423,13 @@ async function init() {
   renderNav();
   renderHero();
   renderPromo();
+  renderSteps();
   renderAbout();
   renderTestimonials();
   renderFooter();
 
   bindEvents();
+  watchScroll();
   observeFadeElements(document);
 
   await loadMenu();
@@ -1275,9 +1437,20 @@ async function init() {
   state.cart = loadCart();
   reconcileCart();
 
+  renderTicker();
   renderCategoryFilter();
   renderProducts();
   updateCart();
+}
+
+/** Give the header a solid, raised look once the page has scrolled. */
+function watchScroll() {
+  const header = document.getElementById("site-header");
+  if (!header) return;
+
+  const update = () => header.classList.toggle("is-scrolled", window.scrollY > 12);
+  update();
+  window.addEventListener("scroll", update, { passive: true });
 }
 
 /**

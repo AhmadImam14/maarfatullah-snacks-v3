@@ -84,15 +84,30 @@ window.SITE_CONTENT = {
    * non-developer) and the UI picks them up with no code change.
    * ======================================================================== */
   hero: {
-    eyebrow: "",
+    eyebrow: "Homemade in Kano",
     headline: "Fresh Homemade Snacks",
-    description: "Delicious snacks made fresh and delivered fast",
+    description: "Delicious snacks made fresh and delivered fast. Pick your favourites and order in seconds on WhatsApp.",
     primaryCta: { label: "Explore Menu", href: "#products" },
-    secondaryCta: null,
+    secondaryCta: { label: "Chat on WhatsApp", channel: "whatsapp" },
     image: {
       url: "images/hero1.png",
       alt: "Assortment of fresh homemade snacks",
     },
+    // Short selling points shown under the buttons. Keep them true.
+    highlights: ["Made fresh", "Fast delivery in Kano", "Order on WhatsApp"],
+  },
+
+  /* ==========================================================================
+   * HOW TO ORDER  (CMS: object inside "siteSettings")
+   * Empty `steps` => the section renders nothing.
+   * ======================================================================== */
+  howToOrder: {
+    heading: "How to order",
+    steps: [
+      { title: "Pick your snacks", text: "Tap + on anything you fancy. Your cart is saved as you go." },
+      { title: "Check your cart", text: "Review your items and total before you send anything." },
+      { title: "Send on WhatsApp", text: "Your order arrives in our chat, ready for us to confirm." },
+    ],
   },
 
   /* ==========================================================================
@@ -193,6 +208,7 @@ window.SITE_CONTENT = {
     heading: "About Us",
     body: ["Premium homemade snacks with fast delivery in Kano."],
     image: null,
+    cta: { label: "Say hello on WhatsApp", channel: "whatsapp" },
   },
 
   /* ==========================================================================
