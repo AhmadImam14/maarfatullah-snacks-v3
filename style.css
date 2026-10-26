@@ -6,6 +6,11 @@
   font-family: system-ui, sans-serif;
 }
 
+a[target="_blank"]::after {
+  content: " ↗";
+  text-decoration: underline;
+}
+
 @font-face {
   font-family: "Nove";
   src: url("fonts/Nove.otf") format("truetype");
@@ -32,7 +37,7 @@ body.dark {
   justify-content: space-between;
   align-items: center;
   padding: 12px 20px;
-  position: fixed;
+  position:absolute;
   top: 0;
   background: transparent;
   /* backdrop-filter: blur(10px); */
@@ -88,6 +93,15 @@ body.dark .navbar {
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.menu-toggle {
+  display: none;
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
 }
 
 /* HERO */
@@ -162,20 +176,17 @@ body.dark .navbar {
   background: #ff6a10;
 }
 
-/* SECTION TITLE */
-.section-title {
-  text-align: center;
-  margin: 30px 0 10px;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-/* GRID */
+/* GRID
+   auto-fill + a min() column floor keeps the layout correct for any product
+   count: 1 item stays card-sized instead of stretching, while 12 or 24 items
+   wrap into as many rows as needed. Nothing here assumes a fixed count. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+  gap: 20px;
   padding: 20px;
+  max-width: 1240px;
+  margin: 0 auto;
 }
 
 /* CARD */
@@ -184,13 +195,20 @@ body.dark .navbar {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  /* transition: transform 0.25s ease, box-shadow 0.25s ease; */
+  max-width: 380px;
+  margin: auto;
+  
+
 }
 
-.card:hover {
+/* .card:hover {
   transform: translateY(-6px) scale(1.03);
   box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-}
+} */
+/* .card image:hover {
+  transform: scale(1.05);
+} */
 
 .card:active {
   transform: scale(1.02);
@@ -200,10 +218,11 @@ body.dark .card {
   background: #1c1c1c;
 }
 
+/* Legacy rule superseded by .card-media (which owns the aspect ratio) — this
+   only guards any stray <img> inside a card. */
 .card img {
-  width: 100%;
-  aspect-ratio: 4/3;
-  object-fit: cover;
+  max-width: 100%;
+  display: block;
 }
 
 .card-content {
@@ -250,6 +269,20 @@ body.dark .card {
   background: #ff6a10;
 }
 
+.qty-value {
+  min-width: 18px;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* KEYBOARD FOCUS */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #ff7a2f;
+  outline-offset: 2px;
+}
+
 /* CART FLOAT */
 .cart {
   position: fixed;
@@ -294,15 +327,108 @@ body.dark .cart-panel {
   border: none;
   border-radius: 10px;
   cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.checkout:hover:not(:disabled) {
+  background: #1a8f34;
+}
+
+.checkout:disabled {
+  background: #9aa4a0;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+/* CART ITEMS */
+#cart-items {
+  max-height: 60vh;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 14px;
+}
+
+body.dark .cart-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cart-remove {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+body.dark .cart-remove {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.cart-remove:hover {
+  background: #ff7a2f;
+  color: #fff;
+}
+
+.cart-empty {
+  opacity: 0.7;
+  font-size: 14px;
+  padding: 10px 0;
 }
 
 /* FOOTER */
 .footer {
+  display:flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 20px;
   text-align: center;
+  justify-content: space-around;
   padding: 20px;
   background: rgba(208, 166, 59, 0.8);
   backdrop-filter: blur(10px);
   margin-top: 40px;
+}
+
+.footer nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer .link {
+  color: inherit;
+  text-decoration: none;
+  font-size: 15px;
+  opacity: 0.9;
+  transition: 0.2s;
+}
+
+.footer a.link:hover {
+  color: #ff7a2f;
+  opacity: 1;
+}
+
+.footer h6{
+  font-weight: 600;
+  line-height: 1.3;
+  font-size: 20px;
 }
 
 /* ABOUT */
@@ -313,7 +439,7 @@ body.dark .cart-panel {
 
 /* FADE ANIMATION FIXED */
 .fade {
-  opacity: 0;
+  opacity: 1;
   transform: translateY(20px);
   transition: 0.6s ease;
 }
@@ -420,6 +546,408 @@ body.dark .modal-content {
   background: rgba(255,255,255,.9);
 }
 
+/* ==========================================================================
+   CMS-READY COMPONENT LAYER
+   These rules support content that may arrive from Sanity later: variable
+   hero copy, optional promo banners, optional category filters, badges,
+   unavailable products and image containers that accept any image source.
+   ========================================================================== */
+
+/* --- HERO: optional eyebrow + CTA group; typography is already fluid ------ */
+.hero-eyebrow {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-content h1 {
+  font-size: clamp(1.9rem, 5.5vw, 3.6rem);
+}
+
+.hero-content p {
+  max-width: 52ch;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.hero-actions .btn {
+  margin-top: 0;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 2px solid currentColor;
+  color: #fff;
+}
+
+/* --- PROMO BANNER (renders only when content provides one) ---------------- */
+.promo-slot {
+  display: block;
+}
+
+.promo-slot[hidden] {
+  display: none;
+}
+
+.promo-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 900px;
+  margin: 40px auto 0;
+  padding: 26px 24px;
+  border-radius: 18px;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(255, 122, 47, 0.14), rgba(208, 166, 59, 0.2));
+}
+
+.promo-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ff7a2f;
+}
+
+.promo-headline {
+  font-size: clamp(1.2rem, 3vw, 1.7rem);
+}
+
+.promo-description {
+  max-width: 60ch;
+  opacity: 0.85;
+  line-height: 1.6;
+}
+
+/* --- GENERIC SECTION HEADINGS ------------------------------------------- */
+.section-title {
+  width: 100%;
+  margin: 30px 0 20px;
+  text-align: center;
+  font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+  font-weight: 600;
+}
+
+/* --- CATEGORY FILTER (hidden until categories exist in the content) ------ */
+.category-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  max-width: 900px;
+  margin: 0 auto 24px;
+  padding: 0 15px;
+}
+
+.category-filter[hidden] {
+  display: none;
+}
+
+.category-btn {
+  padding: 8px 18px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.category-btn:hover {
+  border-color: #ff7a2f;
+  color: #ff7a2f;
+}
+
+.category-btn.active {
+  background: #ff7a2f;
+  border-color: #ff7a2f;
+  color: #fff;
+}
+
+body.dark .category-btn {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* --- CARD MEDIA: consistent ratio box, any image source ------------------ */
+/* A fixed aspect ratio plus object-fit means a local file and a future Sanity
+   image URL of any dimensions produce exactly the same layout. */
+.card-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.35s ease;
+}
+
+.card:hover .card-media img {
+  transform: scale(1.04);
+}
+
+/* No image supplied yet -> neutral placeholder, never a broken image icon. */
+.card-media-empty::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.04),
+    rgba(0, 0, 0, 0.04) 12px,
+    rgba(0, 0, 0, 0.08) 12px,
+    rgba(0, 0, 0, 0.08) 24px
+  );
+}
+
+body.dark .card-media-empty::after {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.05) 12px,
+    rgba(255, 255, 255, 0.1) 12px,
+    rgba(255, 255, 255, 0.1) 24px
+  );
+}
+
+/* --- CARD BADGES (featured / promotional / unavailable) ------------------ */
+.card-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #ff7a2f;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.card-badge-unavailable {
+  background: #5c6360;
+}
+
+/* --- CARD TEXT / META --------------------------------------------------- */
+.card-content h3 {
+  margin-bottom: 6px;
+}
+
+.card-details {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card-details:hover {
+  color: #ff7a2f;
+}
+
+.card-category {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.07);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+body.dark .card-category {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.card-price {
+  font-weight: 600;
+}
+
+/* --- UNAVAILABLE PRODUCT ------------------------------------------------ */
+.card.is-unavailable .card-media img {
+  filter: grayscale(1);
+  opacity: 0.65;
+}
+
+.card.is-unavailable .card-content {
+  opacity: 0.75;
+}
+
+.qty.is-disabled {
+  opacity: 0.5;
+}
+
+.qty button:disabled {
+  cursor: not-allowed;
+}
+
+/* --- FEATURED PRODUCT --------------------------------------------------- */
+.card.is-featured {
+  box-shadow: 0 12px 34px rgba(255, 122, 47, 0.22);
+  outline: 2px solid rgba(255, 122, 47, 0.35);
+  outline-offset: -2px;
+}
+
+/* --- MENU EMPTY STATE --------------------------------------------------- */
+.menu-empty {
+  grid-column: 1 / -1;
+  padding: 30px 10px;
+  text-align: center;
+  opacity: 0.75;
+}
+
+.menu-empty[hidden] {
+  display: none;
+}
+
+/* --- ABOUT + TESTIMONIALS ----------------------------------------------- */
+.about {
+  max-width: 900px;
+  margin: 60px auto 0;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.about p {
+  margin-bottom: 14px;
+  line-height: 1.7;
+  opacity: 0.88;
+}
+
+.testimonials-slot {
+  max-width: 1000px;
+  margin: 60px auto 0;
+  padding: 0 20px;
+}
+
+.testimonial-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.testimonial {
+  margin: 0;
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+body.dark .testimonial {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.testimonial p {
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.testimonial cite {
+  font-size: 0.85rem;
+  font-style: normal;
+  opacity: 0.75;
+}
+
+/* --- MODAL META (category / availability tags) -------------------------- */
+.modal-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.modal-meta:empty {
+  display: none;
+}
+
+.modal-meta span {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.07);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+body.dark .modal-meta span {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.modal-availability.is-out {
+  background: #5c6360;
+  color: #fff;
+}
+
+/* --- SECTION SUBTITLE (optional CMS field) ------------------------------ */
+.section-subtitle {
+  max-width: 640px;
+  margin: 0 auto 20px;
+  padding: 0 20px;
+  text-align: center;
+  line-height: 1.6;
+  opacity: 0.8;
+}
+
+.section-subtitle[hidden] {
+  display: none;
+}
+
+/* --- CART PANEL CLOSE BUTTON -------------------------------------------- */
+.cart-panel h2 {
+  padding-right: 40px;
+}
+
+.close-cart {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.07);
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+body.dark .close-cart {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.close-cart:hover {
+  background: #ff7a2f;
+  color: #fff;
+}
+
 /* MOBILE */
 @media (max-width: 480px) {
   .grid {
@@ -437,6 +965,43 @@ body.dark .modal-content {
   }
 
   .nav-links {
-    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    flex-direction: column;
+    gap: 0;
+    background: rgba(255, 255, 255, 0.97);
+    color: #111;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .nav-links.open {
+    max-height: 300px;
+  }
+
+  .nav-links li {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .nav-links li:last-child {
+    border-bottom: none;
+  }
+
+  .nav-links a {
+    display: block;
+    padding: 14px 20px;
+  }
+
+  body.dark .nav-links {
+    background: rgba(17, 17, 17, 0.97);
+    color: #fff;
+  }
+
+  .menu-toggle {
+    display: block;
   }
 }

@@ -3,32 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!--
+    ==========================================================================
+    SEO / SOCIAL SURFACE  (build-time output, not runtime content)
+    ==========================================================================
+    These tags stay static in the HTML on purpose. Social and search crawlers
+    (including WhatsApp's link preview fetcher) do NOT run JavaScript, so this
+    content must be present in the served HTML.
+
+    When Sanity is introduced, this block becomes GENERATED OUTPUT of a build
+    step from the same content that feeds content.js — never a second source of
+    truth edited by hand.
+    ==========================================================================
+  -->
   <title>Maarifatullah Snacks</title>
+  <meta name="description" content="Fresh homemade snacks with fast delivery in Kano. Browse the menu and order straight to your door on WhatsApp.">
+  <meta name="theme-color" content="#ff7a2f">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Maarifatullah Snacks">
+  <meta property="og:description" content="Fresh homemade snacks in Kano, delivered fast. Order via WhatsApp.">
+  <meta property="og:image" content="images/hero1.png">
+  <meta property="og:locale" content="en_NG">
+  <meta name="twitter:card" content="summary_large_image">
+
   <link rel="icon" href="images/icon.png">
   <link rel="stylesheet" href="style.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Maarifatullah Snacks",
+    "image": "images/logo.png",
+    "description": "Fresh homemade snacks with fast delivery in Kano.",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Kano",
+      "addressCountry": "NG"
+    }
+  }
+  </script>
+
+  <!--
+    NOTE: the JSON-LD above mirrors business.* in content.js. It is duplicated
+    because crawlers do not execute JavaScript. When Sanity is added, generate
+    this block at build time instead of maintaining it by hand.
+  -->
 </head>
 
 <body>
 
+<!--
+  ==========================================================================
+  STRUCTURE ONLY — no content is hard-coded below.
+  Every text node, card, image and link is rendered by script.js from the
+  data in content.js (see README → "Content architecture").
+  ==========================================================================
+-->
+
 <!-- NAVBAR -->
 <nav class="navbar">
   <div class="nav-left">
-    <img src="images/logo.png" class="logo" alt="Logo">
-    <h1 class="brand">Maarifatullah Snacks</h1>
+    <h1 class="brand" id="brand"></h1>
   </div>
 
-  <ul class="nav-links">
-    <li><a href="#home">Home</a></li>
-    <li><a href="#products">Menu</a></li>
-    <li><a href="#about">About</a></li>
-  </ul>
+  <ul id="nav-links" class="nav-links"></ul>
 
   <div class="nav-actions">
-    <button onclick="toggleDarkMode()" class="mode-btn">🌓</button>
+    <button id="mode-toggle" class="mode-btn" type="button" aria-label="Toggle dark mode">🌓</button>
 
-    <div class="cart-icon" onclick="toggleCart()">
+    <div id="cart-icon" class="cart-icon" role="button" tabindex="0" aria-label="Open cart">
       🛒 <span id="cart-count">0</span>
     </div>
+
+    <button id="menu-toggle" class="menu-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links">☰</button>
   </div>
 </nav>
 
@@ -38,158 +89,70 @@
 
   <div class="hero-overlay"></div>
 
-  <img src="images/hero1.png" class="hero-image" alt="Hero Image">
+  <img id="hero-image" class="hero-image" src="" alt="" width="688" height="384" fetchpriority="high">
 
   <div class="hero-content">
-    <h1>Fresh Homemade Snacks</h1>
-    <p>Delicious snacks made fresh and delivered fast</p>
-    <a href="#products" class="btn">Explore Menu</a>
+    <p id="hero-eyebrow" class="hero-eyebrow" hidden></p>
+    <h1 id="hero-headline"></h1>
+    <p id="hero-description" class="hero-description"></p>
+    <div id="hero-actions" class="hero-actions"></div>
   </div>
 
 </section>
+
+<!-- PROMOTIONAL BANNER (renders nothing while content.promo is absent) -->
+<div id="promo-slot" class="promo-slot" hidden></div>
 
 
 <!-- PRODUCTS -->
 <section id="products" class="products">
 
-  <h2 class="section-title">Our Menu</h2>
+  <h2 id="menu-heading" class="section-title"></h2>
+  <p id="menu-subheading" class="section-subtitle" hidden></p>
 
-  <div class="grid">
+  <!--
+    Category filter: rendered by script.js only when at least one product
+    actually has a category. With no categories in the content, this stays
+    hidden and the menu shows every product.
+  -->
+  <div id="category-filter" class="category-filter" role="group" aria-label="Filter menu by category" hidden></div>
 
-    <!-- PRODUCT 1 -->
-    <div
-  class="card fade"
-  onclick="openModal(
-    'Coconut Drink',
-    'Soft sweet juice',
-    '₦1500',
-    'images/coconut.PNG'
-  )"
->
-      <img src="images/coconut.PNG" alt="Coconut Drink">
-      <div class="card-content">
-        <h3>Coconut Drink</h3>
-        <p>Soft sweet juice</p>
-
-        <div class="row">
-          <span>₦1500</span>
-
-          <div class="qty">
-            <button onclick="event.stopPropagation(); changeQty('Coconut Drink',1500,-1)">-</button>
-            <span id="qty-Coconut Drink">0</span>
-            <button onclick="event.stopPropagation(); changeQty('Coconut Drink',1500,1)">+</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PRODUCT 2 -->
-    <div
-  class="card fade"
-  onclick="openModal(
-    'Cookie',
-    'Crispy sweet delight',
-    '₦2000',
-    'images/cookie.jpeg'
-  )"
->
-      <img src="images/cookie.jpeg" alt="Cookie">
-      <div class="card-content">
-        <h3>Cookie</h3>
-        <p>Crispy sweet delight</p>
-
-        <div class="row">
-          <span>₦2000</span>
-
-          <div class="qty">
-            <button onclick="event.stopPropagation(); changeQty('Cookie',2000,-1)">-</button>
-            <span id="qty-Cookie">0</span>
-            <button onclick="event.stopPropagation(); changeQty('Cookie',2000,1)">+</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PRODUCT 3 -->
-  <div
-  class="card fade"
-  onclick="openModal(
-    'Gireba',
-    'Crunchy filled snack',
-    '₦2500',
-    'images/gireba.jpg'
-  )">
-      <img src="images/gireba.jpg" alt="Gireba">
-      <div class="card-content">
-        <h3>Gireba</h3>
-        <p>Crunchy filled snack</p>
-
-        <div class="row">
-          <span>₦2500</span>
-
-          <div class="qty">
-            <button onclick="event.stopPropagation(); changeQty('Gireba',2500,-1)">-</button>
-            <span id="qty-Gireba">0</span>
-            <button onclick="changeQty('Gireba',2500,1)">+</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PRODUCT 4 -->
-    <div
-  class="card fade"
-  onclick="openModal(
-    'Cupcakes',
-    'Soft baked mini cakes',
-    '₦1000 / 4',
-    'images/cupcakes.png'
-  )"
->
-      <img src="images/cupcakes.png" alt="Cupcakes">
-      <div class="card-content">
-        <h3>Cupcakes</h3>
-        <p>Soft baked mini cakes</p>
-
-        <div class="row">
-          <span>₦1000 / 4</span>
-
-          <div class="qty">
-            <button onclick="event.stopPropagation(); changeQty('Cupcakes',1000,-1)">-</button>
-            <span id="qty-Cupcakes">0</span>
-            <button onclick="changeQty('Cupcakes',1000,1)">+</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
+  <div class="grid" id="products-grid">
+    <!-- Product cards are rendered dynamically by script.js from content.js -->
   </div>
+
+  <p id="menu-empty" class="menu-empty" hidden></p>
 </section>
 
 
 <!-- ABOUT -->
 <section id="about" class="about fade">
-  <h2>About Us</h2>
-  <p>Premium homemade snacks with fast delivery in Kano.</p>
+  <h2 id="about-heading"></h2>
+  <div id="about-body" class="about-body"></div>
 </section>
+
+<!-- TESTIMONIALS (renders nothing while content.testimonials is empty) -->
+<div id="testimonials-slot" class="testimonials-slot" hidden></div>
 
 
 <!-- FLOATING CART -->
-<div class="cart" onclick="toggleCart()">
+<div id="floating-cart" class="cart" role="button" tabindex="0" aria-label="Open cart">
   🛒 <span id="cart-count-2">0</span>
 </div>
 
 
 <!-- CART PANEL -->
-<div id="cart-panel" class="cart-panel">
+<div id="cart-panel" class="cart-panel" aria-label="Shopping cart">
+
+  <button id="close-cart" class="close-cart" type="button" aria-label="Close cart">&times;</button>
 
   <h2>Your Cart</h2>
 
   <div id="cart-items"></div>
 
-  <h3>Total: ₦<span id="cart-total">0</span></h3>
+  <h3>Total: <span id="cart-total">0</span></h3>
 
-  <button onclick="checkout()" class="checkout">
+  <button id="checkout-btn" class="checkout" type="button" disabled>
     Checkout on WhatsApp
   </button>
 
@@ -197,20 +160,23 @@
 
 
 <!-- FOOTER -->
-<footer class="footer fade">
-  <p>© 2026 Maarifatullah Snacks</p>
-</footer>
+<footer class="footer fade" id="footer"></footer>
 
 <!-- PRODUCT PREVIEW MODAL -->
-<div id="product-modal" class="modal">
+<div id="product-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
 
   <div class="modal-content">
 
-    <button class="close-modal">&times;</button>
+    <button class="close-modal" type="button" aria-label="Close product preview">&times;</button>
 
-    <img id="modal-image" src="" alt="Product">
+    <img id="modal-image" src="" alt="">
 
     <div class="modal-body">
+      <div id="modal-meta" class="modal-meta">
+        <span id="modal-category" class="modal-category" hidden></span>
+        <span id="modal-availability" class="modal-availability" hidden></span>
+      </div>
+
       <h2 id="modal-title"></h2>
 
       <p id="modal-description"></p>
@@ -222,6 +188,12 @@
 
 </div>
 
+<!--
+  content.js  -> publishes window.SITE_CONTENT (the future Sanity swap point)
+  script.js   -> renders that data and contains all application logic
+  Load order matters: content first, app logic second.
+-->
+<script src="content.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
